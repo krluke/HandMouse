@@ -180,8 +180,8 @@ class HandTrackerGUI:
                 cy = int(mouse_state.cursor_y * 100)
                 self._position_label.setText(f"Cursor: ({cx}%, {cy}%)")
                 status = []
-                if mouse_state.is_picking:
-                    status.append("PICK")
+                if mouse_state.pick:
+                    status.append("DROP")
                 if mouse_state.is_dragging:
                     status.append("DRAG")
                 if mouse_state.left_click:
