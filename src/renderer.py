@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from src.pipeline import PipelineResult
+from src.mouse.state import MouseState
+from src.os.renderer import OSRenderer
 
 HAND_CONNECTIONS = [
     (0, 1), (1, 2), (2, 3), (3, 4),
@@ -21,6 +23,7 @@ class Renderer:
         self.show_landmarks = display.get("show_landmarks", True)
         self.show_connections = display.get("show_connections", True)
         self.show_fps = display.get("show_fps", True)
+        self.os_renderer = OSRenderer(config)
 
     def render_skeleton(self, frame_shape: tuple, result: PipelineResult, fps: float) -> np.ndarray:
         h, w = frame_shape[:2]
@@ -93,3 +96,22 @@ class Renderer:
 
         annotated_rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
         return annotated_rgb
+
+    def render_os_screen(
+        self,
+        frame_shape: tuple,
+        mouse_state: MouseState,
+        result: PipelineResult,
+        fps: float,
+    ) -> tuple[np.ndarray, list]:
+        h, w = frame_shape[:2]
+        canvas, app_log = self.os_renderer.render(
+            w, h, mouse_state, fps,
+            click_fired=mouse_state.left_click,
+            right_click_fired=mouse_state.right_click,
+        )
+        if self.show_fps:
+            cv2.putText(canvas, f"FPS: {fps:.1f}", (8, 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
+        canvas_rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
+        return canvas_rgb, list(self.os_renderer.get_app_log())

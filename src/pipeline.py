@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Optional
 from src.hand_tracker import HandTracker, HandData
 from src.gesture_llm import GestureLLM
+from src.mouse.detector import MouseSimulator
+from src.mouse.state import MouseState
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,7 @@ class Pipeline:
         self.config = config
         self.hand_tracker = HandTracker(config)
         self.gesture_llm = GestureLLM(config)
+        self.mouse_sim = MouseSimulator(config)
         self._nim_enabled = bool(config.get("nim", {}).get("api_key"))
         pipe_config = config.get("pipeline", {})
         self.change_threshold = pipe_config.get("landmark_change_threshold", 0.03)
@@ -48,8 +51,9 @@ class Pipeline:
         }
         self._gesture_source = "none"
 
-    def process(self, frame: np.ndarray) -> PipelineResult:
+    def process(self, frame: np.ndarray) -> tuple[PipelineResult, MouseState]:
         hands = self.hand_tracker.process(frame)
+        mouse_state = self.mouse_sim.update(hands)
 
         mp_gesture = hands[0].gesture_label if hands and hands[0].gesture_label != "None" else None
         mp_score = hands[0].gesture_score if hands else 0.0
@@ -98,7 +102,7 @@ class Pipeline:
             gesture_source=self._gesture_source,
             gesture_confidence=self._current_gesture.get("confidence", 0.0),
             gesture_description=self._current_gesture.get("description", ""),
-        )
+        ), mouse_state
 
     def _classify_local(self, hands: list[HandData]) -> str:
         if not hands:

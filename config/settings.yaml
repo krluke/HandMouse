@@ -25,6 +25,13 @@ pipeline:
   landmark_change_threshold: 0.03
   gesture_confidence_threshold: 0.6
   debounce_frames: 5
+  cursor_smoothing: 0.3
+  click_window_ms: 250
+  right_click_window_ms: 200
+  pick_distance_threshold: 0.05
+  scroll_threshold: 0.01
+  missed_frames_to_hide: 3
+  drag_move_threshold: 0.08
 
 display:
   show_landmarks: true

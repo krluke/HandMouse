@@ -66,11 +66,13 @@ def main():
 
     prev_time = time.time()
     last_result = None
+    last_mouse_state = None
     last_annotated = None
     last_fps = 0.0
+    last_log: list = []
 
     def update_loop():
-        nonlocal prev_time, last_result, last_annotated, last_fps
+        nonlocal prev_time, last_result, last_annotated, last_fps, last_mouse_state, last_log
 
         if not gui.is_running():
             return
@@ -81,7 +83,7 @@ def main():
             return
         frame = cv2.flip(frame, 1)
 
-        result = pipeline.process(frame)
+        result, mouse_state = pipeline.process(frame)
 
         curr_time = time.time()
         dt = curr_time - prev_time
@@ -89,12 +91,17 @@ def main():
         last_fps = last_fps * 0.9 + (1.0 / dt if dt > 0 else 0) * 0.1
 
         last_result = result
+        last_mouse_state = mouse_state
 
         display_mode = gui.get_display_mode()
         if display_mode == 1:
             last_annotated = renderer.render_with_camera(frame, result, last_fps)
+            last_log = []
+        elif display_mode == 2:
+            last_annotated, last_log = renderer.render_os_screen(frame.shape, mouse_state, result, last_fps)
         else:
             last_annotated = renderer.render_skeleton(frame.shape, result, last_fps)
+            last_log = []
 
         current_nim = gui.is_nim_enabled()
         if current_nim != bool(config.get("nim", {}).get("api_key")):
@@ -106,7 +113,7 @@ def main():
             pipeline._nim_enabled = current_nim
 
         gui.show_frame(last_annotated)
-        gui.update_info(last_result, last_fps)
+        gui.update_info(last_result, last_fps, mouse_state=last_mouse_state, log_messages=last_log)
 
         elapsed = (time.time() - curr_time) * 1000
         next_interval = max(1, FRAME_INTERVAL_MS - int(elapsed))

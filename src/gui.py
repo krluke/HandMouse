@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QImage, QPixmap
 from src.pipeline import PipelineResult
+from src.mouse.state import MouseState
 
 DARK_BG = "#1e1e1e"
 ACCENT_GREEN = "#00ff88"
@@ -37,6 +38,8 @@ class HandTrackerGUI:
         self._position_label = None
         self._nim_checkbox = None
         self._display_mode_combo = None
+        self._app_log_label = None
+        self._app_log: list = []
         self._status_label = None
         self._running = False
 
@@ -131,9 +134,17 @@ class HandTrackerGUI:
 
         sidebar_layout.addWidget(QLabel("DISPLAY MODE"))
         self._display_mode_combo = QComboBox()
-        self._display_mode_combo.addItems(["Skeleton Only", "Camera + Skeleton"])
+        self._display_mode_combo.addItems(["Skeleton Only", "Camera + Skeleton", "OS Screen"])
         self._display_mode_combo.setCurrentIndex(0)
         sidebar_layout.addWidget(self._display_mode_combo)
+        sidebar_layout.addSpacing(6)
+
+        sidebar_layout.addWidget(self._make_separator())
+        sidebar_layout.addWidget(QLabel("APP LOG"))
+        self._app_log_label = QLabel("No apps opened yet")
+        self._app_log_label.setStyleSheet(f"color: {DIM}; font-size: 9pt;")
+        self._app_log_label.setWordWrap(True)
+        sidebar_layout.addWidget(self._app_log_label)
         sidebar_layout.addSpacing(10)
 
         self._status_label = QLabel("Status: Running")
@@ -159,8 +170,36 @@ class HandTrackerGUI:
         scaled = pixmap.scaled(label_w, label_h, Qt.KeepAspectRatio, Qt.FastTransformation)
         self._video_label.setPixmap(scaled)
 
-    def update_info(self, result: PipelineResult, fps: float):
+    def update_info(self, result: PipelineResult, fps: float, mouse_state: MouseState = None,
+                    log_messages: list = None):
         self._fps_label.setText(f"FPS: {fps:.1f}")
+
+        if mouse_state is not None:
+            if mouse_state.cursor_visible:
+                cx = int(mouse_state.cursor_x * 100)
+                cy = int(mouse_state.cursor_y * 100)
+                self._position_label.setText(f"Cursor: ({cx}%, {cy}%)")
+                status = []
+                if mouse_state.is_picking:
+                    status.append("PICK")
+                if mouse_state.is_dragging:
+                    status.append("DRAG")
+                if mouse_state.left_click:
+                    status.append("L-CLICK")
+                if mouse_state.right_click:
+                    status.append("R-CLICK")
+                if mouse_state.scroll_dy != 0:
+                    status.append(f"SCROLL {mouse_state.scroll_dy:+.2f}")
+                self._status_label.setText(" | ".join(status) if status else "Cursor active")
+            else:
+                self._position_label.setText("Cursor: hidden")
+                self._status_label.setText("Cursor hidden")
+
+        if log_messages is not None and len(log_messages) > 0:
+            self._app_log = list(log_messages)
+            log_text = "\n".join([f"{name}  @ {ts}" for name, ts in self._app_log[:5]])
+            self._app_log_label.setText(log_text if log_text else "No apps opened yet")
+            self._app_log_label.setStyleSheet(f"color: {ACCENT_GREEN}; font-size: 9pt;")
 
         gesture = result.gesture_label
         if gesture == "no_hand":
@@ -169,7 +208,8 @@ class HandTrackerGUI:
             self._confidence_label.setText("Confidence: —")
             self._source_label.setText("Source: —")
             self._hand_info_label.setText("No hand detected")
-            self._position_label.setText("Position: —")
+            if mouse_state is None or not mouse_state.cursor_visible:
+                self._position_label.setText("Position: —")
             self._finger_label.setText("—")
             return
 
@@ -186,9 +226,6 @@ class HandTrackerGUI:
         if result.hands:
             hand = result.hands[0]
             self._hand_info_label.setText(f"{hand.handedness} hand ({hand.confidence:.0%})")
-            wrist = hand.landmarks[0]
-            cx, cy = int(wrist[0] * 100), int(wrist[1] * 100)
-            self._position_label.setText(f"Position: ({cx}%, {cy}%)")
 
             finger_parts = []
             for name, state in hand.finger_states.items():
@@ -197,7 +234,6 @@ class HandTrackerGUI:
             self._finger_label.setText(" ".join(finger_parts))
         else:
             self._hand_info_label.setText("No hand detected")
-            self._position_label.setText("Position: —")
             self._finger_label.setText("—")
 
     def is_nim_enabled(self) -> bool:
