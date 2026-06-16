@@ -158,15 +158,17 @@ Select **"OS Screen"** from the display mode dropdown to use virtual mouse contr
 
 | Gesture | Hand Pose | Action |
 |---|---|---|
-| Move cursor | Index finger extended | Index tip controls cursor position |
-| Left click | Index curls then extends quickly | Left mouse click |
-| Right click | Index + middle both curl for 200ms | Right mouse click |
-| Pick object | Index + middle + thumb all extended, thumb near index | Grab/grasp |
-| Drop object | Release pick gesture | Drop at current position |
-| Scroll | Index + middle extended, vertical hand movement | Scroll up/down |
+| Move cursor | **Only pinky extended** (all others curled) | Cursor follows pinky tip |
+| Left click | Index extends up then curls back (< 300ms) | Left mouse click |
+| Right click | Middle extends up then curls back (< 300ms) | Right mouse click |
+| Scroll | Pinky DIP joint bends repeatedly | Scroll up/down (`scroll_dy` accumulates) |
+| Drag | Pinky bends + hand moves > threshold while scrolling | Icon follows cursor |
+| Drop | Release bend after drag | Icon stays at new position, logged in APP LOG |
 | Cursor hide | No hand detected for 3 frames | Cursor hidden |
 
-Clicking an icon on the OS desktop logs the app name and timestamp in the sidebar **APP LOG** section.
+> **Normal state**: Only pinky (little finger) extended — cursor tracks pinky. Any other finger extended pauses cursor control.
+
+Icons can be clicked (logs in APP LOG) or dragged to new positions. The OS decides whether the scroll/drag motion is a drag (if hand moved significantly) or a scroll (if mostly stationary).
 
 ## Performance
 
