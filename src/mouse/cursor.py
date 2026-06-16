@@ -2,6 +2,9 @@ import numpy as np
 from src.hand_tracker import HandData
 
 
+PINKY_TIP = 20
+
+
 class CursorMapper:
     def __init__(self, config: dict):
         pipe_config = config.get("pipeline", {})
@@ -18,9 +21,9 @@ class CursorMapper:
             return self._prev_x, self._prev_y, False
 
         lm = hand.landmarks
-        idx_tip = lm[8]
-        x = float(np.clip(idx_tip[0], 0.0, 1.0))
-        y = float(np.clip(idx_tip[1], 0.0, 1.0))
+        pinky_tip = lm[PINKY_TIP]
+        x = float(np.clip(pinky_tip[0], 0.0, 1.0))
+        y = float(np.clip(pinky_tip[1], 0.0, 1.0))
 
         sx = self._prev_x + self.smoothing * (x - self._prev_x)
         sy = self._prev_y + self.smoothing * (y - self._prev_y)
