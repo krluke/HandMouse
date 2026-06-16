@@ -13,7 +13,7 @@ Real-time hand tracking and gesture recognition powered by MediaPipe. Displays a
 - **3-tier gesture classification**: MediaPipe → local rules → NVIDIA NIM LLM (optional)
 - **Cross-platform**: NixOS, Linux, macOS, Windows (WSL)
 - **Wayland native** with PySide6 GUI
-- **Skeleton-only display** — bone connections + fingertip highlights on black canvas
+- **Switchable display modes** — skeleton-only (black canvas) or camera + skeleton overlay (dropdown in sidebar)
 - **Sidebar info panel**: gesture label, confidence, source, finger states, hand position
 
 ## Requirements
@@ -111,7 +111,8 @@ Pipeline — 3 classification tiers
        ▼
 Skeleton Renderer
        │
-       ├─ Black canvas (no camera feed)
+       ├─ Skeleton Only:  black canvas + bone overlay
+       ├─ Camera + Skeleton: real camera feed + bone overlay
        ├─ Bone connections (white, fingertip segments cyan)
        ├─ Landmark dots (wrist=orange, fingertips=green, other=gray)
        └─ FPS counter
@@ -119,8 +120,8 @@ Skeleton Renderer
        ▼
 PySide6 GUI
        │
-       ├─ Video panel: skeleton on black
-       └─ Sidebar: gesture, confidence, source, finger states, position
+       ├─ Video panel: skeleton or camera+skeleton (switchable via dropdown)
+       └─ Sidebar: gesture, confidence, source, finger states, position, display mode selector
 ```
 
 ## Configuration
