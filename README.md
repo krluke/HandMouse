@@ -13,8 +13,10 @@ Real-time hand tracking and gesture recognition powered by MediaPipe. Displays a
 - **3-tier gesture classification**: MediaPipe → local rules → NVIDIA NIM LLM (optional)
 - **Cross-platform**: NixOS, Linux, macOS, Windows (WSL)
 - **Wayland native** with PySide6 GUI
-- **Switchable display modes** — skeleton-only (black canvas) or camera + skeleton overlay (dropdown in sidebar)
-- **Sidebar info panel**: gesture label, confidence, source, finger states, hand position
+- **Switchable display modes** — Skeleton Only / Camera + Skeleton / OS Screen (dropdown in sidebar)
+- **Virtual OS screen** — Windows-like desktop, cursor follows index finger, click icons to open apps
+- **Virtual mouse gestures** — left click, right click, pick/drop (3-finger grasp), scroll
+- **Sidebar info panel**: gesture label, confidence, source, finger states, cursor position, APP LOG
 
 ## Requirements
 
@@ -149,6 +151,22 @@ bash run.sh --nim
 ```
 
 Or edit `config/settings.yaml` directly (not recommended for shared machines).
+
+### Virtual Mouse Gestures (OS Screen mode)
+
+Select **"OS Screen"** from the display mode dropdown to use virtual mouse control.
+
+| Gesture | Hand Pose | Action |
+|---|---|---|
+| Move cursor | Index finger extended | Index tip controls cursor position |
+| Left click | Index curls then extends quickly | Left mouse click |
+| Right click | Index + middle both curl for 200ms | Right mouse click |
+| Pick object | Index + middle + thumb all extended, thumb near index | Grab/grasp |
+| Drop object | Release pick gesture | Drop at current position |
+| Scroll | Index + middle extended, vertical hand movement | Scroll up/down |
+| Cursor hide | No hand detected for 3 frames | Cursor hidden |
+
+Clicking an icon on the OS desktop logs the app name and timestamp in the sidebar **APP LOG** section.
 
 ## Performance
 
