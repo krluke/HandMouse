@@ -89,7 +89,12 @@ def main():
         last_fps = last_fps * 0.9 + (1.0 / dt if dt > 0 else 0) * 0.1
 
         last_result = result
-        last_annotated = renderer.render_skeleton(frame.shape, result, last_fps)
+
+        display_mode = gui.get_display_mode()
+        if display_mode == 1:
+            last_annotated = renderer.render_with_camera(frame, result, last_fps)
+        else:
+            last_annotated = renderer.render_skeleton(frame.shape, result, last_fps)
 
         current_nim = gui.is_nim_enabled()
         if current_nim != bool(config.get("nim", {}).get("api_key")):

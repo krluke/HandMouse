@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
-    QLabel, QCheckBox, QFrame, QSizePolicy,
+    QLabel, QCheckBox, QComboBox, QFrame, QSizePolicy,
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QImage, QPixmap
@@ -36,6 +36,7 @@ class HandTrackerGUI:
         self._finger_label = None
         self._position_label = None
         self._nim_checkbox = None
+        self._display_mode_combo = None
         self._status_label = None
         self._running = False
 
@@ -46,6 +47,10 @@ class HandTrackerGUI:
             QLabel {{ color: #ffffff; font-family: Consolas, monospace; font-size: 11pt; }}
             QCheckBox {{ color: #ffffff; font-family: Consolas, monospace; font-size: 10pt; }}
             QCheckBox::indicator {{ width: 14px; height: 14px; }}
+            QComboBox {{ color: #ffffff; background-color: #2a2a2a; font-family: Consolas, monospace; font-size: 10pt; border: 1px solid #444444; padding: 2px 6px; }}
+            QComboBox::drop-down {{ border: none; }}
+            QComboBox::down-arrow {{ image: none; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #888888; margin-right: 4px; }}
+            QComboBox QAbstractItemView {{ background-color: #2a2a2a; color: #ffffff; selection-background-color: {ACCENT_GREEN}; }}
             QFrame#separator {{ background-color: #333333; max-height: 1px; }}
         """)
 
@@ -122,6 +127,13 @@ class HandTrackerGUI:
         self._nim_checkbox = QCheckBox("Enable NIM (Llama 3.2 Vision)")
         self._nim_checkbox.setChecked(nim_enabled)
         sidebar_layout.addWidget(self._nim_checkbox)
+        sidebar_layout.addSpacing(6)
+
+        sidebar_layout.addWidget(QLabel("DISPLAY MODE"))
+        self._display_mode_combo = QComboBox()
+        self._display_mode_combo.addItems(["Skeleton Only", "Camera + Skeleton"])
+        self._display_mode_combo.setCurrentIndex(0)
+        sidebar_layout.addWidget(self._display_mode_combo)
         sidebar_layout.addSpacing(10)
 
         self._status_label = QLabel("Status: Running")
@@ -192,6 +204,11 @@ class HandTrackerGUI:
         if self._nim_checkbox is None:
             return False
         return self._nim_checkbox.isChecked()
+
+    def get_display_mode(self) -> int:
+        if self._display_mode_combo is None:
+            return 0
+        return self._display_mode_combo.currentIndex()
 
     def is_running(self) -> bool:
         return self._running
