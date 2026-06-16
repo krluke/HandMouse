@@ -9,8 +9,9 @@ class MouseState:
     left_click: bool = False
     right_click: bool = False
     scroll_dy: float = 0.0
-    is_picking: bool = False
+    is_scrolling: bool = False
     is_dragging: bool = False
+    pick: bool = False
     confidence: float = 0.0
 
     def clear_events(self):

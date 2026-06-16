@@ -26,12 +26,13 @@ pipeline:
   gesture_confidence_threshold: 0.6
   debounce_frames: 5
   cursor_smoothing: 0.3
-  click_window_ms: 250
-  right_click_window_ms: 200
-  pick_distance_threshold: 0.05
-  scroll_threshold: 0.01
+  click_window_ms: 300
+  right_click_window_ms: 300
+  pinky_dip_threshold_deg: 15.0
+  pinky_bend_min_frames: 3
   missed_frames_to_hide: 3
-  drag_move_threshold: 0.08
+  scroll_drag_threshold: 0.06
+  pinky_scroll_scale: 2.0
 
 display:
   show_landmarks: true

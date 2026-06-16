@@ -8,14 +8,15 @@ class IconEvent:
     action: str
 
 
-def hit_test(cursor_x_norm: float, cursor_y_norm: float, icons: list[IconDef], w: int, h: int) -> IconDef | None:
+def hit_test(cursor_x_norm: float, cursor_y_norm: float,
+             icon_positions: dict[str, tuple[int, int]],
+             icons: list[IconDef], w: int, h: int) -> IconDef | None:
     cx = int(cursor_x_norm * w)
     cy = int(cursor_y_norm * h)
     for icon in icons:
-        if icon.x <= cx <= icon.x + icon.width and icon.y <= cy <= icon.y + icon.height:
+        if icon.id not in icon_positions:
+            continue
+        ix, iy = icon_positions[icon.id]
+        if ix <= cx <= ix + icon.width and iy <= cy <= iy + icon.height:
             return icon
     return None
-
-
-def get_icon_at(hands, w, h):
-    pass

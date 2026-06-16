@@ -18,12 +18,22 @@ APP_COLORS = {
     "settings": (180, 180, 180),
 }
 
+APP_SHAPES = {
+    "explorer": "folder",
+    "calculator": "calc",
+    "music": "music",
+    "browser": "globe",
+    "camera": "camera",
+    "settings": "gear",
+}
+
 
 @dataclass
 class IconDef:
     id: str
     label: str
     color: tuple
+    shape: str
     x: int
     y: int
     width: int = 60
@@ -54,6 +64,7 @@ def get_icon_grid(w: int, h: int) -> list[IconDef]:
                 id=app_id,
                 label=APP_LABELS[app_id],
                 color=APP_COLORS[app_id],
+                shape=APP_SHAPES[app_id],
                 x=x, y=y, width=icon_w, height=icon_h,
             ))
 
