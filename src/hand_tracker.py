@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from dataclasses import dataclass
 from pathlib import Path
+from mediapipe import Image, ImageFormat
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import (
     GestureRecognizer,
@@ -127,5 +128,4 @@ class HandTracker:
 
 
 def _to_mp_image(rgb_array: np.ndarray):
-    from mediapipe import Image, ImageFormat
     return Image(image_format=ImageFormat.SRGB, data=rgb_array)

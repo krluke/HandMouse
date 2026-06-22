@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from collections import deque
 from src.hand_tracker import HandData
 from src.mouse.state import MouseState
 from src.mouse.cursor import CursorMapper, PINKY_TIP
@@ -25,8 +26,8 @@ class MouseSimulator:
         self._state = MouseState()
 
         self._prev_pinky_dip_angle: float = 0.0
-        self._pinky_dip_angles: list[float] = []
-        self._pinky_dip_delta_history: list[float] = []
+        self._pinky_dip_angles: deque[float] = deque(maxlen=15)
+        self._pinky_dip_delta_history: deque[float] = deque(maxlen=15)
         self._bend_count: int = 0
         self._was_scrolling_or_dragging: bool = False
 
@@ -67,9 +68,7 @@ class MouseSimulator:
 
         pinky_dip_angle = self._compute_pinky_dip_angle(lm)
 
-        normal_state = (not index_ext and not middle_ext and not thumb_ext and pinky_ext)
-
-        if normal_state:
+        if pinky_ext and confidence >= 0.6:
             self._state.cursor_visible = True
             cx, cy, _ = self.cursor_mapper.map_to_cursor(hands, confidence_threshold=0.6)
             self._state.cursor_x = cx
@@ -81,14 +80,11 @@ class MouseSimulator:
                 self._reset_scroll_state()
 
         else:
-            if self._state.cursor_visible and confidence >= 0.6:
-                pass
-            else:
-                self._state.cursor_visible = False
+            self._state.cursor_visible = False
 
         self._detect_left_click(index_ext)
         self._detect_right_click(middle_ext)
-        self._detect_scroll_or_drag(pinky_ext, pinky_dip_angle, lm, normal_state)
+        self._detect_scroll_or_drag(pinky_ext, pinky_dip_angle, lm)
 
         self._prev_index_extended = index_ext
         self._prev_middle_extended = middle_ext
@@ -99,8 +95,7 @@ class MouseSimulator:
     def _compute_pinky_dip_angle(self, lm) -> float:
         pip = lm[PINKY_PIP]
         dip = lm[PINKY_DIP]
-        angle = np.arctan2(float(dip[1]) - float(pip[1]),
-                            float(dip[0]) - float(pip[0]))
+        angle = np.arctan2(dip[1] - pip[1], dip[0] - pip[0])
         return angle
 
     def _detect_left_click(self, index_ext: bool):
@@ -130,10 +125,7 @@ class MouseSimulator:
             self._middle_was_fully_curled = False
 
     def _detect_scroll_or_drag(self, pinky_ext: bool, pinky_dip_angle: float,
-                               lm, normal_state: bool):
-        if len(self._pinky_dip_angles) > 15:
-            self._pinky_dip_angles.pop(0)
-
+                               lm):
         self._pinky_dip_angles.append(pinky_dip_angle)
 
         if len(self._pinky_dip_angles) < 2:
@@ -142,16 +134,13 @@ class MouseSimulator:
         delta = abs(pinky_dip_angle - self._prev_pinky_dip_angle)
         self._pinky_dip_delta_history.append(delta)
 
-        if len(self._pinky_dip_delta_history) > 15:
-            self._pinky_dip_delta_history.pop(0)
-
         if not pinky_ext:
             self._bend_count = 0
             self._was_scrolling_or_dragging = False
             return
 
         threshold_rad = np.deg2rad(self.pinky_dip_threshold_deg)
-        recent_deltas = self._pinky_dip_delta_history[-6:]
+        recent_deltas = list(self._pinky_dip_delta_history)[-6:]
         bent_frames = sum(1 for d in recent_deltas if d > threshold_rad)
 
         if bent_frames >= 2:
@@ -166,13 +155,13 @@ class MouseSimulator:
 
             scroll_delta = 0.0
             if len(self._pinky_dip_delta_history) >= 3:
-                scroll_delta = sum(self._pinky_dip_delta_history[-3:])
+                scroll_delta = sum(list(self._pinky_dip_delta_history)[-3:])
 
             self._state.scroll_dy = scroll_delta * self.pinky_scroll_scale
             self._state.is_scrolling = True
 
             pinky_tip = lm[PINKY_TIP]
-            current_pos = (float(pinky_tip[0]), float(pinky_tip[1]))
+            current_pos = (pinky_tip[0], pinky_tip[1])
             if self._scroll_origin_valid:
                 disp = np.sqrt(
                     (current_pos[0] - self._scroll_start_pos[0]) ** 2 +

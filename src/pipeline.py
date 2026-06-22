@@ -57,7 +57,6 @@ class Pipeline:
 
         mp_gesture = hands[0].gesture_label if hands and hands[0].gesture_label != "None" else None
         mp_score = hands[0].gesture_score if hands else 0.0
-        fallback_gesture = self._classify_local(hands) if hands else "no_hand"
 
         if not hands:
             self._current_gesture = {
@@ -77,14 +76,6 @@ class Pipeline:
                     "description": f"MediaPipe classified as {mp_gesture}",
                 }
                 self._gesture_source = "mediapipe"
-
-            elif fallback_gesture != "unknown":
-                self._current_gesture = {
-                    "gesture": fallback_gesture,
-                    "confidence": 0.8,
-                    "description": f"Locally classified as {fallback_gesture}",
-                }
-                self._gesture_source = "local"
 
             if self._nim_enabled and pose_changed and self._debounce_counter <= 0:
                 llm_gesture = self.gesture_llm.classify_gesture(frame)

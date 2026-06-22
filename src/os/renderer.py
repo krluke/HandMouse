@@ -22,6 +22,9 @@ class OSRenderer:
         self._dragged_icon_id: str | None = None
         self._drag_offset: tuple[int, int] = (0, 0)
 
+        self._bg_cache: np.ndarray | None = None
+        self._bg_cache_size: tuple[int, int] = (0, 0)
+
     def render(
         self,
         w: int,
@@ -31,7 +34,11 @@ class OSRenderer:
         click_fired: bool,
         right_click_fired: bool,
     ) -> tuple[np.ndarray, list[tuple[str, str]]]:
-        canvas = self._draw_background(w, h)
+        if self._bg_cache is None or self._bg_cache_size != (w, h):
+            self._bg_cache = self._build_background(w, h)
+            self._bg_cache_size = (w, h)
+
+        canvas = self._bg_cache.copy()
 
         icons = get_icon_grid(w, h)
         for icon in icons:
@@ -103,19 +110,16 @@ class OSRenderer:
         canvas_rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
         return canvas_rgb, list(self._app_log)
 
-    def _draw_background(self, w: int, h: int) -> np.ndarray:
+    def _build_background(self, w: int, h: int) -> np.ndarray:
         canvas = np.zeros((h, w, 3), dtype=np.uint8)
         bg = (26, 26, 46)
         canvas[:] = bg
-        self._draw_grid_pattern(canvas, w, h)
-        return canvas
-
-    def _draw_grid_pattern(self, canvas: np.ndarray, w: int, h: int):
         grid_color = (36, 36, 60)
         for gx in range(0, w, 40):
             cv2.line(canvas, (gx, TITLE_H), (gx, h - TASKBAR_H), grid_color, 1, cv2.LINE_AA)
         for gy in range(TITLE_H, h - TASKBAR_H, 40):
             cv2.line(canvas, (0, gy), (w, gy), grid_color, 1, cv2.LINE_AA)
+        return canvas
 
     def _draw_icons(self, canvas: np.ndarray, icons: list[IconDef], w: int, h: int,
                     hovered: IconDef | None):
@@ -125,17 +129,15 @@ class OSRenderer:
             is_hovered = hovered is not None and hovered.id == icon.id
             is_dragged = self._dragged_icon_id == icon.id
 
-            if is_hovered:
-                overlay = canvas.copy()
-                cv2.rectangle(overlay, (ix - 4, iy - 4), (ix + icon.width + 4, iy + icon.height + 20),
-                              (80, 150, 255), -1, cv2.LINE_AA)
-                cv2.addWeighted(overlay, 0.3, canvas, 0.7, 0, canvas)
-
-            if is_dragged:
-                overlay = canvas.copy()
-                cv2.rectangle(overlay, (ix - 4, iy - 4), (ix + icon.width + 4, iy + icon.height + 20),
-                              (100, 255, 160), -1, cv2.LINE_AA)
-                cv2.addWeighted(overlay, 0.35, canvas, 0.65, 0, canvas)
+            x1 = max(0, ix - 4)
+            y1 = max(0, iy - 4)
+            x2 = min(w, ix + icon.width + 4)
+            y2 = min(h, iy + icon.height + 20)
+            color = (100, 255, 160) if is_dragged else (80, 150, 255)
+            alpha = 0.35 if is_dragged else 0.3
+            roi = canvas[y1:y2, x1:x2].copy()
+            cv2.rectangle(roi, (0, 0), (x2 - x1, y2 - y1), color, -1, cv2.LINE_AA)
+            cv2.addWeighted(roi, alpha, canvas[y1:y2, x1:x2], 1 - alpha, 0, canvas[y1:y2, x1:x2])
 
             draw_icon_shape(canvas, ix, iy, icon.width, icon.height, icon.shape, icon.color)
 

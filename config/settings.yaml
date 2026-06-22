@@ -2,7 +2,7 @@ camera:
   device_index: 0
   width: 640
   height: 360
-  fps: 60
+  fps: 30
 
 mediapipe:
   max_num_hands: 2
@@ -25,7 +25,7 @@ pipeline:
   landmark_change_threshold: 0.03
   gesture_confidence_threshold: 0.6
   debounce_frames: 5
-  cursor_smoothing: 0.3
+  cursor_smoothing: 0.7
   click_window_ms: 300
   right_click_window_ms: 300
   pinky_dip_threshold_deg: 15.0
