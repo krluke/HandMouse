@@ -31,12 +31,14 @@ class MouseSimulator:
         self._bend_count: int = 0
         self._was_scrolling_or_dragging: bool = False
 
-        self._prev_index_extended: bool = True
-        self._prev_middle_extended: bool = True
+        self._prev_index_extended: bool = False
+        self._prev_middle_extended: bool = False
         self._index_curl_start: float = 0.0
         self._middle_curl_start: float = 0.0
         self._index_was_fully_curled: bool = False
         self._middle_was_fully_curled: bool = False
+        self._index_ever_extended: bool = False
+        self._middle_ever_extended: bool = False
 
         self._missed_frames: int = 0
         self._scroll_start_pos: tuple[float, float] = (0.0, 0.0)
@@ -101,7 +103,10 @@ class MouseSimulator:
     def _detect_left_click(self, index_ext: bool):
         now = time.time()
 
-        if self._prev_index_extended and not index_ext:
+        if index_ext:
+            self._index_ever_extended = True
+
+        if self._index_ever_extended and self._prev_index_extended and not index_ext:
             self._index_curl_start = now
             self._index_was_fully_curled = True
 
@@ -110,11 +115,15 @@ class MouseSimulator:
             if elapsed < self.click_window_ms / 1000.0:
                 self._state.left_click = True
             self._index_was_fully_curled = False
+            self._index_ever_extended = False
 
     def _detect_right_click(self, middle_ext: bool):
         now = time.time()
 
-        if self._prev_middle_extended and not middle_ext:
+        if middle_ext:
+            self._middle_ever_extended = True
+
+        if self._middle_ever_extended and self._prev_middle_extended and not middle_ext:
             self._middle_curl_start = now
             self._middle_was_fully_curled = True
 
@@ -123,6 +132,7 @@ class MouseSimulator:
             if elapsed < self.right_click_window_ms / 1000.0:
                 self._state.right_click = True
             self._middle_was_fully_curled = False
+            self._middle_ever_extended = False
 
     def _detect_scroll_or_drag(self, pinky_ext: bool, pinky_dip_angle: float,
                                lm):
@@ -188,3 +198,5 @@ class MouseSimulator:
         self._middle_was_fully_curled = False
         self._index_curl_start = 0.0
         self._middle_curl_start = 0.0
+        self._index_ever_extended = False
+        self._middle_ever_extended = False
